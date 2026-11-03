@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Doar - Marketplace de Doações</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div id="navbar"></div>
+
+    <main class="container py-4" style="max-width: 640px;">
+        <h1 class="h3 mb-3">Fazer uma doação</h1>
+
+        <div id="alerta"></div>
+
+        <div class="card shadow-sm" id="card-form">
+            <div class="card-body">
+                <form id="form-doacao">
+                    <div class="mb-3">
+                        <label class="form-label" for="instituicao">Instituição</label>
+                        <select class="form-select" id="instituicao" required></select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="tipo">Tipo de doação</label>
+                        <select class="form-select" id="tipo">
+                            <option value="DINHEIRO">Dinheiro (via Pix)</option>
+                            <option value="ITEM">Item (roupas, alimentos, etc.)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3" id="grupo-valor">
+                        <label class="form-label" for="valor">Valor (R$)</label>
+                        <input type="number" class="form-control" id="valor" min="0.01" step="0.01" required>
+                        <div class="form-text">Depois de registrar, mostramos o QR Code Pix para você pagar.</div>
+                    </div>
+
+                    <div class="mb-3 d-none" id="grupo-necessidade">
+                        <label class="form-label" for="necessidade">Esta instituição está precisando de</label>
+                        <select class="form-select" id="necessidade"></select>
+                        <div class="form-text" id="info-necessidade"></div>
+                    </div>
+
+                    <div class="alert alert-light border small d-none" id="aviso-aceitos"></div>
+
+                    <div class="mb-3 d-none" id="grupo-quantidade">
+                        <label class="form-label" for="quantidade">Quantas unidades você vai doar?</label>
+                        <input type="number" class="form-control" id="quantidade" min="1" max="10000" step="1" value="1">
+                        <div class="form-text" id="info-quantidade"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="descricao" id="rotulo-descricao">Mensagem (opcional)</label>
+                        <textarea class="form-control" id="descricao" rows="3" maxlength="500"></textarea>
+                    </div>
+
+                    <div id="grupo-entrega" class="d-none">
+                        <hr>
+                        <h2 class="h6 mb-3">Combinando a entrega</h2>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="telefone">Seu telefone (com DDD)</label>
+                            <input type="tel" class="form-control" id="telefone" maxlength="20" placeholder="(51) 99999-8888">
+                            <div class="form-text">Só a instituição que receber a doação vai ver este número, para combinar a entrega.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="entrega" id="entrega-leva" value="DOADOR_LEVA" checked>
+                                <label class="form-check-label" for="entrega-leva">Eu levo até a instituição</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="entrega" id="entrega-busca" value="INSTITUICAO_BUSCA">
+                                <label class="form-check-label" for="entrega-busca">Peço que busquem comigo</label>
+                            </div>
+                            <div class="form-text" id="info-endereco-instituicao"></div>
+                        </div>
+
+                        <div class="mb-3 d-none" id="grupo-endereco">
+                            <label class="form-label" for="endereco">Endereço de retirada</label>
+                            <input type="text" class="form-control" id="endereco" maxlength="255" placeholder="Rua, número, bairro, complemento">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="data" id="rotulo-data">Data em que você vai levar</label>
+                            <input type="date" class="form-control" id="data">
+                            <div class="form-text" id="info-data"></div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100" id="btn-enviar">Registrar doação</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm d-none" id="card-pix">
+            <div class="card-body text-center">
+                <div class="alert alert-success text-start">
+                    <strong>Doação registrada!</strong> Falta só pagar via Pix. Ela fica como pendente
+                    até a instituição confirmar o recebimento.
+                </div>
+
+                <div id="pix-resumo"></div>
+                <div id="pix-conteudo"></div>
+
+                <ol class="text-start small text-muted mt-3">
+                    <li>Abra o app do seu banco e escolha Pix, depois Ler QR Code (ou Pix Copia e Cola).</li>
+                    <li>Confira o nome do recebedor e o valor antes de confirmar o pagamento.</li>
+                    <li>Acompanhe o status em Minhas doações.</li>
+                </ol>
+
+                <a href="minhas-doacoes.html" class="btn btn-outline-primary">Ir para Minhas doações</a>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        const PRAZO_PADRAO_DIAS = 90;
+
+        const selectInstituicao = document.getElementById('instituicao');
+        const selectTipo = document.getElementById('tipo');
+        const grupoValor = document.getElementById('grupo-valor');
+        const campoValor = document.getElementById('valor');
+        const grupoNecessidade = document.getElementById('grupo-necessidade');
+        const selectNecessidade = document.getElementById('necessidade');
+        const infoNecessidade = document.getElementById('info-necessidade');
+        const avisoAceitos = document.getElementById('aviso-aceitos');
+        const grupoQuantidade = document.getElementById('grupo-quantidade');
+        const campoQuantidade = document.getElementById('quantidade');
+        const infoQuantidade = document.getElementById('info-quantidade');
+        const campoDescricao = document.getElementById('descricao');
+        const rotuloDescricao = document.getElementById('rotulo-descricao');
+        const grupoEntrega = document.getElementById('grupo-entrega');
+        const campoTelefone = document.getElementById('telefone');
+        const radiosEntrega = document.querySelectorAll('input[name="entrega"]');
+        const infoEnderecoInstituicao = document.getElementById('info-endereco-instituicao');
+        const grupoEndereco = document.getElementById('grupo-endereco');
+        const campoEndereco = document.getElementById('endereco');
+        const campoData = document.getElementById('data');
+        const rotuloData = document.getElementById('rotulo-data');
+        const infoData = document.getElementById('info-data');
+        const botaoEnviar = document.getElementById('btn-enviar');
+
+        let instituicoes = [];
+        let necessidades = [];
+        let descricaoAutomatica = '';
+
+        if (exigirLogin()) {
+            if (getRole() === 'INSTITUICAO') {
+                window.location.href = 'painel-instituicao.html';
+            } else {
+                renderNavbar();
+                iniciar();
+            }
+        }
+
+        function instituicaoSelecionada() {
+            return instituicoes.find(i => i.id === Number(selectInstituicao.value));
+        }
+
+        function necessidadeSelecionada() {
+            return necessidades.find(n => n.id === Number(selectNecessidade.value));
+        }
+
+        function formaEntrega() {
+            return document.querySelector('input[name="entrega"]:checked').value;
+        }
+
+        async function iniciar() {
+            try {
+                const resultados = await Promise.all([api('/instituicoes'), api('/necessidades')]);
+                instituicoes = resultados[0];
+                necessidades = resultados[1];
+            } catch (erro) {
+                mostrarAlerta(erro.message);
+                return;
+            }
+
+            if (instituicoes.length === 0) {
+                mostrarAlerta('Nenhuma instituição disponível ainda. Volte mais tarde.', 'warning');
+                botaoEnviar.disabled = true;
+                return;
+            }
+
+            // Links da página inicial: ?instituicaoId=1 ou ?instituicaoId=1&necessidadeId=3
+            const params = new URLSearchParams(window.location.search);
+            const necessidadeDaUrl = necessidades.find(n => String(n.id) === params.get('necessidadeId'));
+            const instituicaoDaUrl = necessidadeDaUrl
+                ? String(necessidadeDaUrl.instituicaoId)
+                : params.get('instituicaoId');
+
+            selectInstituicao.innerHTML = instituicoes.map(i => `
+                <option value="${i.id}" ${String(i.id) === instituicaoDaUrl ? 'selected' : ''}>${esc(i.nome)}</option>
+            `).join('');
+
+            if (necessidadeDaUrl) {
+                selectTipo.value = 'ITEM';
+            }
+
+            atualizarNecessidades(necessidadeDaUrl ? necessidadeDaUrl.id : null);
+            atualizarCampos();
+        }
+
+        // Lista as necessidades abertas da instituição escolhida
+        function atualizarNecessidades(preSelecionadaId) {
+            const id = Number(selectInstituicao.value);
+            const daInstituicao = necessidades.filter(n => n.instituicaoId === id);
+
+            selectNecessidade.innerHTML = '<option value="">Outro item (fora da lista)</option>'
+                + daInstituicao.map(n => `
+                    <option value="${n.id}" ${n.id === preSelecionadaId ? 'selected' : ''}>
+                        ${esc(n.item)}${n.quantidade ? ' (' + n.quantidade + ')' : ''} — até ${formatarDataCurta(n.dataLimite)}
+                    </option>`).join('');
+
+            aplicarNecessidade();
+        }
+
+        // Ao escolher uma necessidade, sugere o item como descrição e limita a data ao prazo dela
+        function aplicarNecessidade() {
+            const n = necessidadeSelecionada();
+            infoNecessidade.textContent = n && n.descricao ? n.descricao : '';
+
+            const descricaoLivre = campoDescricao.value.trim() === '' || campoDescricao.value === descricaoAutomatica;
+            if (n && descricaoLivre) {
+                campoDescricao.value = n.item;
+                descricaoAutomatica = n.item;
+            } else if (!n && campoDescricao.value === descricaoAutomatica) {
+                campoDescricao.value = '';
+                descricaoAutomatica = '';
+            }
+
+            atualizarQuantidade();
+            atualizarAceitos();
+            atualizarData();
+        }
+
+        // Mostra quantas unidades a instituição pediu (só informativo: o doador pode dar mais ou menos)
+        function atualizarQuantidade() {
+            const n = necessidadeSelecionada();
+            infoQuantidade.textContent = n && n.quantidade
+                ? 'A instituição pediu ' + n.quantidade + (n.quantidade === 1 ? ' unidade' : ' unidades')
+                  + '. Você pode doar quantas puder.'
+                : 'Pode ser mais de uma, como 3 cobertores ou 10 pacotes.';
+        }
+
+        // Item sem necessidade escolhida: mostra o que a instituição costuma receber (só informativo, nunca bloqueia)
+        function atualizarAceitos() {
+            const instituicao = instituicaoSelecionada();
+            const mostrar = selectTipo.value === 'ITEM' && !selectNecessidade.value && instituicao;
+            const aceitos = mostrar
+                ? etiquetas(instituicao.tiposAceitos, TIPOS_ITEM, instituicao.outroTipoAceito, 'text-bg-light border')
+                : '';
+
+            if (!aceitos) {
+                avisoAceitos.classList.add('d-none');
+                avisoAceitos.innerHTML = '';
+                return;
+            }
+
+            avisoAceitos.innerHTML = `
+                <div class="mb-1">Esta instituição costuma receber:</div>
+                <div class="mb-2">${aceitos}</div>
+                <div>Se o seu item for diferente, você ainda pode doar: a instituição vai entrar em contato pelo telefone que você informar para combinar.</div>`;
+            avisoAceitos.classList.remove('d-none');
+        }
+
+        function atualizarData() {
+            const hoje = hojeISO();
+            const n = necessidadeSelecionada();
+            const maximo = n ? n.dataLimite : somarDias(hoje, PRAZO_PADRAO_DIAS);
+
+            campoData.min = hoje;
+            campoData.max = maximo;
+            infoData.textContent = n
+                ? 'Prazo desta necessidade: ' + formatarDataCurta(n.dataLimite) + '.'
+                : 'Até ' + PRAZO_PADRAO_DIAS + ' dias a partir de hoje.';
+
+            if (campoData.value && (campoData.value > maximo || campoData.value < hoje)) {
+                campoData.value = '';
+            }
+        }
+
+        function atualizarEntrega() {
+            const busca = formaEntrega() === 'INSTITUICAO_BUSCA';
+
+            grupoEndereco.classList.toggle('d-none', !busca);
+            campoEndereco.required = busca && selectTipo.value === 'ITEM';
+            rotuloData.textContent = busca ? 'Data de preferência para a retirada' : 'Data em que você vai levar';
+
+            const instituicao = instituicaoSelecionada();
+            infoEnderecoInstituicao.textContent = (!busca && instituicao)
+                ? 'Endereço da instituição: ' + [instituicao.endereco, instituicao.cidade].filter(Boolean).join(' - ')
+                : '';
+        }
+
+        // Dinheiro pede valor; item pede quantidade, descrição, telefone, forma de entrega e data
+        function atualizarCampos() {
+            const dinheiro = selectTipo.value === 'DINHEIRO';
+
+            grupoValor.classList.toggle('d-none', !dinheiro);
+            campoValor.required = dinheiro;
+            if (!dinheiro) {
+                campoValor.value = '';
+            }
+
+            grupoEntrega.classList.toggle('d-none', dinheiro);
+            grupoQuantidade.classList.toggle('d-none', dinheiro);
+            campoQuantidade.required = !dinheiro;
+            campoTelefone.required = !dinheiro;
+            campoData.required = !dinheiro;
+
+            grupoNecessidade.classList.toggle('d-none', dinheiro || selectNecessidade.options.length <= 1);
+
+            if (dinheiro && campoDescricao.value === descricaoAutomatica) {
+                campoDescricao.value = '';
+                descricaoAutomatica = '';
+            }
+            campoDescricao.required = !dinheiro;
+            rotuloDescricao.textContent = dinheiro ? 'Mensagem (opcional)' : 'O que você vai doar?';
+
+            atualizarEntrega();
+            atualizarData();
+            atualizarAceitos();
+        }
+
+        selectInstituicao.addEventListener('change', () => {
+            atualizarNecessidades(null);
+            atualizarCampos();
+        });
+        selectTipo.addEventListener('change', atualizarCampos);
+        selectNecessidade.addEventListener('change', aplicarNecessidade);
+        radiosEntrega.forEach(r => r.addEventListener('change', atualizarEntrega));
+
+        function mostrarEtapaPix(doacao, instituicao) {
+            document.getElementById('card-form').classList.add('d-none');
+            document.getElementById('card-pix').classList.remove('d-none');
+
+            document.getElementById('pix-resumo').innerHTML = resumoPix(instituicao, doacao.valor);
+            montarPix(document.getElementById('pix-conteudo'), {
+                chave: instituicao.chavePix,
+                nome: instituicao.nome,
+                cidade: instituicao.cidade,
+                valor: doacao.valor
+            });
+            window.scrollTo({ top: 0 });
+        }
+
+        document.getElementById('form-doacao').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            mostrarAlerta('');
+
+            const dinheiro = selectTipo.value === 'DINHEIRO';
+            const instituicao = instituicaoSelecionada();
+            const busca = formaEntrega() === 'INSTITUICAO_BUSCA';
+
+            const corpo = {
+                instituicaoId: Number(selectInstituicao.value),
+                tipo: selectTipo.value,
+                descricao: campoDescricao.value.trim() || null,
+                valor: dinheiro ? Number(campoValor.value) : null
+            };
+
+            if (!dinheiro) {
+                corpo.quantidade = Number(campoQuantidade.value);
+                corpo.necessidadeId = selectNecessidade.value ? Number(selectNecessidade.value) : null;
+                corpo.telefoneDoador = campoTelefone.value.trim();
+                corpo.formaEntrega = formaEntrega();
+                corpo.enderecoRetirada = busca ? campoEndereco.value.trim() : null;
+                corpo.dataPrevista = campoData.value || null;
+            }
+
+            botaoEnviar.disabled = true;
+            try {
+                const doacao = await api('/doacoes', { method: 'POST', body: JSON.stringify(corpo) });
+
+                if (dinheiro && instituicao && instituicao.chavePix) {
+                    mostrarEtapaPix(doacao, instituicao);
+                } else {
+                    window.location.href = 'minhas-doacoes.html?ok=1';
+                }
+            } catch (erro) {
+                mostrarAlerta(erro.message);
+                botaoEnviar.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

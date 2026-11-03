@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin - Marketplace de Doações</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div id="navbar"></div>
+
+    <main class="container py-4">
+        <h1 class="h3 mb-3">Administração</h1>
+
+        <div id="alerta"></div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h5 mb-1">Instituições</h2>
+                <p class="text-muted small">
+                    Antes de aprovar, confira o CNPJ e use <strong>Ver QR Pix</strong>: escaneie com o app do seu banco e
+                    verifique, sem pagar, se o nome do recebedor corresponde à instituição.
+                    Confira também os textos livres de &quot;Outra área&quot; e &quot;Outros itens&quot; (em <span class="badge text-bg-warning fw-normal">amarelo</span>),
+                    porque eles aparecem publicamente no site.
+                </p>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Instituição</th>
+                                <th>CNPJ</th>
+                                <th>Cidade</th>
+                                <th>Chave Pix</th>
+                                <th>Responsável</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpo-instituicoes"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Doações recebidas</h2>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Data</th>
+                                <th>Doador</th>
+                                <th>Instituição</th>
+                                <th>Detalhes</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpo-doacoes"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        const CORES_STATUS = {
+            PENDENTE: 'warning text-dark',
+            CONFIRMADA: 'success',
+            APROVADA: 'success',
+            CANCELADA: 'secondary',
+            REJEITADA: 'danger'
+        };
+
+        let instituicoesPorId = {};
+
+        function badgeStatus(status) {
+            return `<span class="badge bg-${CORES_STATUS[status] || 'secondary'}">${esc(status)}</span>`;
+        }
+
+        function detalhes(d) {
+            const texto = d.descricao ? esc(d.descricao) : '';
+            const unidades = d.quantidade ? ' (' + d.quantidade + (d.quantidade === 1 ? ' unidade)' : ' unidades)') : '';
+            const tipo = d.tipo === 'DINHEIRO' ? formatarDinheiro(d.valor) : 'Item' + unidades;
+            return tipo + (texto ? ' <span class="text-muted">— ' + texto + '</span>' : '');
+        }
+
+        // Só entra quem está logado como ADMIN (a API também confere, isto é só conforto)
+        if (exigirLogin()) {
+            if (getRole() !== 'ADMIN') {
+                window.location.href = 'index.html';
+            } else {
+                renderNavbar();
+                carregarTudo();
+            }
+        }
+
+        async function carregarTudo() {
+            try {
+                const [doacoes, instituicoes] = await Promise.all([
+                    api('/doacoes'),
+                    api('/instituicoes/admin')
+                ]);
+
+                instituicoesPorId = Object.fromEntries(instituicoes.map(i => [i.id, i]));
+                renderInstituicoes(instituicoes);
+                renderDoacoes(doacoes, instituicoes);
+            } catch (erro) {
+                mostrarAlerta(erro.message);
+            }
+        }
+
+        function renderInstituicoes(instituicoes) {
+            const corpo = document.getElementById('corpo-instituicoes');
+
+            if (instituicoes.length === 0) {
+                corpo.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Nenhuma instituição cadastrou-se ainda.</td></tr>';
+                return;
+            }
+
+            // Pendentes primeiro, depois por nome
+            instituicoes.sort((a, b) => {
+                const pa = a.status === 'PENDENTE' ? 0 : 1;
+                const pb = b.status === 'PENDENTE' ? 0 : 1;
+                if (pa !== pb) return pa - pb;
+                return a.nome.localeCompare(b.nome);
+            });
+
+            corpo.innerHTML = instituicoes.map(i => {
+                let acoes = `<button class="btn btn-sm btn-outline-secondary me-1" onclick="verPix(${i.id})">Ver QR Pix</button>`;
+                if (i.status === 'PENDENTE') {
+                    acoes += `<button class="btn btn-sm btn-success me-1" onclick="mudarStatusInstituicao(${i.id}, 'APROVADA')">Aprovar</button>
+                              <button class="btn btn-sm btn-outline-danger" onclick="mudarStatusInstituicao(${i.id}, 'REJEITADA')">Rejeitar</button>`;
+                } else if (i.status === 'APROVADA') {
+                    acoes += `<button class="btn btn-sm btn-outline-danger" onclick="mudarStatusInstituicao(${i.id}, 'REJEITADA')">Suspender</button>`;
+                } else {
+                    acoes += `<button class="btn btn-sm btn-success" onclick="mudarStatusInstituicao(${i.id}, 'APROVADA')">Aprovar</button>`;
+                }
+
+                const areas = etiquetas(i.areasAtuacao, AREAS_ATUACAO, i.outraArea, 'text-bg-secondary', true);
+                const aceitos = etiquetas(i.tiposAceitos, TIPOS_ITEM, i.outroTipoAceito, 'text-bg-light border', true);
+
+                return `
+                    <tr>
+                        <td>
+                            ${esc(i.nome)}
+                            <div class="small text-muted">${esc(i.endereco)}</div>
+                            ${areas ? `<div class="mt-1">${areas}</div>` : ''}
+                            ${aceitos ? `<div class="mt-1 small text-muted">Recebe: ${aceitos}</div>` : ''}
+                        </td>
+                        <td class="text-nowrap">${esc(formatarCnpj(i.cnpj))}</td>
+                        <td>${esc(i.cidade)}</td>
+                        <td><code>${esc(i.chavePix)}</code></td>
+                        <td>${esc(i.responsavelEmail)}</td>
+                        <td>${badgeStatus(i.status)}</td>
+                        <td class="text-nowrap">${acoes}</td>
+                    </tr>`;
+            }).join('');
+        }
+
+        function renderDoacoes(doacoes, instituicoes) {
+            const corpo = document.getElementById('corpo-doacoes');
+            const nomesInstituicoes = Object.fromEntries(instituicoes.map(i => [i.id, i.nome]));
+
+            if (doacoes.length === 0) {
+                corpo.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Nenhuma doação registrada ainda.</td></tr>';
+                return;
+            }
+
+            // Pendentes primeiro; dentro de cada grupo, as mais recentes no topo
+            doacoes.sort((a, b) => {
+                const pa = a.status === 'PENDENTE' ? 0 : 1;
+                const pb = b.status === 'PENDENTE' ? 0 : 1;
+                if (pa !== pb) return pa - pb;
+                return new Date(b.dataDoacao) - new Date(a.dataDoacao);
+            });
+
+            corpo.innerHTML = doacoes.map(d => {
+                const acoes = d.status === 'PENDENTE'
+                    ? `<button class="btn btn-sm btn-success me-1" onclick="mudarStatusDoacao(${d.id}, 'CONFIRMADA')">Confirmar</button>
+                       <button class="btn btn-sm btn-outline-danger" onclick="mudarStatusDoacao(${d.id}, 'CANCELADA')">Cancelar</button>`
+                    : '<span class="text-muted">—</span>';
+
+                return `
+                    <tr>
+                        <td>${formatarData(d.dataDoacao)}</td>
+                        <td>${esc(d.usuarioNome)}</td>
+                        <td>${esc(nomesInstituicoes[d.instituicaoId] || 'Instituição #' + d.instituicaoId)}</td>
+                        <td>${detalhes(d)}</td>
+                        <td>${badgeStatus(d.status)}</td>
+                        <td class="text-nowrap">${acoes}</td>
+                    </tr>`;
+            }).join('');
+        }
+
+        function verPix(id) {
+            const i = instituicoesPorId[id];
+            if (!i.chavePix) {
+                mostrarAlerta('Esta instituição não tem chave Pix cadastrada.', 'warning');
+                return;
+            }
+            const aviso = `<div class="alert alert-info small text-start mt-2">
+                Escaneie com o app do seu banco e confira o nome do recebedor <strong>sem confirmar o pagamento</strong>.
+                O nome deve corresponder ao CNPJ ${esc(formatarCnpj(i.cnpj))}.
+            </div>`;
+            abrirModalPix('Conferir chave Pix', resumoPix(i) + aviso, {
+                chave: i.chavePix,
+                nome: i.nome,
+                cidade: i.cidade
+            });
+        }
+
+        async function mudarStatusInstituicao(id, status) {
+            if (status === 'REJEITADA' && !confirm('Rejeitar/suspender esta instituição? Ela deixa de aparecer no site.')) {
+                return;
+            }
+            mostrarAlerta('');
+            try {
+                await api('/instituicoes/' + id + '/status?status=' + status, { method: 'PATCH' });
+                await carregarTudo();
+            } catch (erro) {
+                mostrarAlerta(erro.message);
+            }
+        }
+
+        async function mudarStatusDoacao(id, status) {
+            if (status === 'CANCELADA' && !confirm('Cancelar esta doação?')) {
+                return;
+            }
+            mostrarAlerta('');
+            try {
+                await api('/doacoes/' + id + '/status?status=' + status, { method: 'PATCH' });
+                await carregarTudo();
+            } catch (erro) {
+                mostrarAlerta(erro.message);
+            }
+        }
+    </script>
+</body>
+</html>

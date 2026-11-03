@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Painel da instituição - Marketplace de Doações</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div id="navbar"></div>
+
+    <main class="container py-4">
+        <h1 class="h3 mb-3">Painel da instituição</h1>
+
+        <div id="alerta"></div>
+        <div id="status-instituicao"></div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-lg-8">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3">Dados da instituição</h2>
+                        <form id="form-instituicao">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="nome">Nome</label>
+                                    <input type="text" class="form-control" id="nome" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="cnpj">CNPJ</label>
+                                    <input type="text" class="form-control" id="cnpj" disabled>
+                                </div>
+                                <div class="col-md-8">
+                                    <label class="form-label" for="endereco">Endereço</label>
+                                    <input type="text" class="form-control" id="endereco">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label" for="cidade">Cidade</label>
+                                    <input type="text" class="form-control" id="cidade" required>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" for="descricao">Descrição</label>
+                                    <textarea class="form-control" id="descricao" rows="3" maxlength="1000"></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" for="chavePix">Chave Pix</label>
+                                    <input type="text" class="form-control" id="chavePix" maxlength="77" required>
+                                    <div class="form-text">CPF/CNPJ, email, telefone com +55 (ex.: +5551999998888) ou chave aleatória.</div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Áreas de atuação</label>
+                                    <div class="row g-1" id="areas"></div>
+                                    <input type="text" class="form-control mt-2" id="outra-area" maxlength="100"
+                                           placeholder="Outra área (opcional se marcou alguma acima)">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Itens que costumam receber</label>
+                                    <div class="row g-1" id="tipos"></div>
+                                    <input type="text" class="form-control mt-2" id="outro-tipo" maxlength="100"
+                                           placeholder="Outros itens (opcional)">
+                                    <div class="form-text">Orientação para os doadores: não bloqueia nenhuma doação.</div>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info small mt-3">
+                                Se você alterar o <strong>nome</strong> ou a <strong>chave Pix</strong>, a instituição volta para análise
+                                e some do site até ser aprovada de novo. Alterar áreas e itens aceitos não exige nova análise.
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Salvar alterações</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h2 class="h5 mb-1">Seu QR Code Pix</h2>
+                        <p class="text-muted small">É assim que os doadores veem o seu Pix (sem valor definido). Escaneie com o app do seu banco e confira se o recebedor é a sua instituição.</p>
+                        <div id="pix-previa"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h5 mb-1">Necessidades</h2>
+                <p class="text-muted small">
+                    Avise o que a instituição está precisando e até quando. As necessidades aparecem na página inicial
+                    enquanto estiverem abertas e dentro do prazo. Passado o prazo, ela some do site, e você pode prorrogar editando a data.
+                </p>
+
+                <div id="aviso-necessidades"></div>
+
+                <form id="form-necessidade">
+                    <fieldset id="fs-necessidade">
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-5">
+                                <label class="form-label" for="nec-item">Item</label>
+                                <input type="text" class="form-control" id="nec-item" maxlength="100" placeholder="Ex.: Cobertores" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label" for="nec-quantidade">Quantidade (opcional)</label>
+                                <input type="number" class="form-control" id="nec-quantidade" min="1">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" for="nec-data">Data limite</label>
+                                <input type="date" class="form-control" id="nec-data" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="nec-descricao">Detalhes (opcional)</label>
+                                <input type="text" class="form-control" id="nec-descricao" maxlength="500"
+                                       placeholder="Ex.: novos ou em bom estado, tamanho solteiro">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success" id="btn-necessidade">Publicar necessidade</button>
+                        <button type="button" class="btn btn-outline-secondary d-none" id="btn-cancelar-edicao">Cancelar edição</button>
+                    </fieldset>
+                </form>
+
+                <div class="table-responsive mt-3">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Item</th>
+                                <th>Qtd.</th>
+                                <th>Data limite</th>
+                                <th>Situação</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpo-necessidades"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h5 mb-1">Doações recebidas</h2>
+                <p class="text-muted small">
+                    Dinheiro: quando o valor cair na sua conta, clique em Confirmar. Itens: combine a entrega com o doador
+                    (o botão de WhatsApp abre a conversa) e confirme quando o item chegar. Se a doação não se concretizar, clique em Cancelar.
+                </p>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Data</th>
+                                <th>Doador</th>
+                                <th>Detalhes</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpo-doacoes"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        const CORES_STATUS = { PENDENTE: 'warning text-dark', CONFIRMADA: 'success', CANCELADA: 'secondary' };
+
+        const AVISOS = {
+            PENDENTE: ['warning', '<strong>Em análise.</strong> Sua instituição ainda não aparece no site. Assim que a administração aprovar, ela fica visível e pode receber doações.'],
+            APROVADA: ['success', '<strong>Aprovada.</strong> Sua instituição aparece no site e pode receber doações.'],
+            REJEITADA: ['danger', '<strong>Cadastro rejeitado.</strong> Corrija os dados e salve para enviar de novo para análise.']
+        };
+
+        let instituicaoAtual = null;
+        let necessidades = [];
+        let editandoId = null;
+
+        function badgeStatus(status) {
+            return `<span class="badge bg-${CORES_STATUS[status] || 'secondary'}">${esc(status)}</span>`;
+        }
+
+        function detalhes(d) {
+            const texto = d.descricao ? esc(d.descricao) : '';
+
+            if (d.tipo === 'DINHEIRO') {
+                return formatarDinheiro(d.valor) + (texto ? ' <span class="text-muted">— ' + texto + '</span>' : '');
+            }
+
+            const unidades = d.quantidade ? ' (' + d.quantidade + (d.quantidade === 1 ? ' unidade)' : ' unidades)') : '';
+            let html = 'Item' + unidades + (texto ? ' <span class="text-muted">— ' + texto + '</span>' : '');
+            if (d.necessidadeItem) {
+                html += `<div><span class="badge text-bg-info">Necessidade: ${esc(d.necessidadeItem)}</span></div>`;
+            }
+
+            const entrega = d.formaEntrega === 'INSTITUICAO_BUSCA'
+                ? 'Retirada em: ' + esc(d.enderecoRetirada)
+                : 'O doador leva até a instituição';
+
+            html += `
+                <div class="small mt-1">
+                    <div>Telefone: ${esc(formatarTelefone(d.telefoneDoador))}
+                        <a href="https://wa.me/55${esc(d.telefoneDoador)}" target="_blank" rel="noopener">WhatsApp</a>
+                    </div>
+                    <div>${entrega}</div>
+                    <div>Data prevista: ${esc(formatarDataCurta(d.dataPrevista))}</div>
+                </div>`;
+            return html;
+        }
+
+        // Só entra quem tem conta de instituição (a API também confere)
+        if (exigirLogin()) {
+            if (getRole() !== 'INSTITUICAO') {
+                window.location.href = 'index.html';
+            } else {
+                renderNavbar();
+                prepararFormularioNecessidade();
+                carregarTudo();
+            }
+        }
+
+        async function carregarTudo() {
+            try {
+                const [instituicao, doacoes, minhasNecessidades] = await Promise.all([
+                    api('/instituicoes/minha'),
+                    api('/doacoes'),
+                    api('/necessidades/minhas')
+                ]);
+                instituicaoAtual = instituicao;
+                necessidades = minhasNecessidades;
+
+                renderInstituicao(instituicao);
+                renderNecessidades();
+                renderDoacoes(doacoes);
+            } catch (erro) {
+                mostrarAlerta(erro.message);
+            }
+        }
+
+        async function carregarNecessidades() {
+            try {
+                necessidades = await api('/necessidades/minhas');
+                renderNecessidades();
+            } catch (erro) {
+                mostrarAlerta(erro.message);
+            }
+        }
+
+        // ---------- Dados da instituição ----------
+
+        function renderInstituicao(i) {
+            const [tipo, html] = AVISOS[i.status];
+            document.getElementById('status-instituicao').innerHTML = `<div class="alert alert-${tipo}">${html}</div>`;
+
+            document.getElementById('nome').value = i.nome || '';
+            document.getElementById('cnpj').value = formatarCnpj(i.cnpj);
+            document.getElementById('endereco').value = i.endereco || '';
+            document.getElementById('cidade').value = i.cidade || '';
+            document.getElementById('descricao').value = i.descricao || '';
+            document.getElementById('chavePix').value = i.chavePix || '';
+
+            montarCheckboxes(document.getElementById('areas'), AREAS_ATUACAO, 'area', i.areasAtuacao);
+            document.getElementById('outra-area').value = i.outraArea || '';
+            montarCheckboxes(document.getElementById('tipos'), TIPOS_ITEM, 'tipo', i.tiposAceitos);
+            document.getElementById('outro-tipo').value = i.outroTipoAceito || '';
+
+            if (i.chavePix) {
+                montarPix(document.getElementById('pix-previa'), {
+                    chave: i.chavePix,
+                    nome: i.nome,
+                    cidade: i.cidade
+                });
+            }
+        }
+
+        document.getElementById('form-instituicao').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            mostrarAlerta('');
+
+            const areas = lerCheckboxes(document.getElementById('areas'));
+            const outraArea = document.getElementById('outra-area').value.trim();
+            if (areas.length === 0 && !outraArea) {
+                mostrarAlerta('Escolha pelo menos uma área de atuação (ou preencha "Outra área").');
+                return;
+            }
+
+            const corpo = {
+                nome: document.getElementById('nome').value.trim(),
+                endereco: document.getElementById('endereco').value.trim(),
+                cidade: document.getElementById('cidade').value.trim(),
+                descricao: document.getElementById('descricao').value.trim(),
+                chavePix: document.getElementById('chavePix').value.trim(),
+                areasAtuacao: areas,
+                outraArea: outraArea || null,
+                tiposAceitos: lerCheckboxes(document.getElementById('tipos')),
+                outroTipoAceito: document.getElementById('outro-tipo').value.trim() || null
+            };
+
+            try {
+                const statusAntes = instituicaoAtual.status;
+                const salva = await api('/instituicoes/minha', { method: 'PUT', body: JSON.stringify(corpo) });
+                await carregarTudo();
+
+                if (statusAntes !== 'PENDENTE' && salva.status === 'PENDENTE') {
+                    mostrarAlerta('Dados salvos. A instituição voltou para análise e não aparece no site até ser aprovada.', 'warning');
+                } else {
+                    mostrarAlerta('Dados salvos!', 'success');
+                }
+            } catch (erro) {
+                mostrarAlerta(erro.message);
+            }
+        });
+
+        // ---------- Necessidades ----------
+
+        function prepararFormularioNecessidade() {
+            const campoData = document.getElementById('nec-data');
+            campoData.min = hojeISO();
+            campoData.max = somarDias(hojeISO(), 365);
+        }
+
+        function renderNecessidades() {
+            const aprovada = instituicaoAtual && instituicaoAtual.status === 'APROVADA';
+            document.getElementById('fs-necessidade').disabled = !aprovada;
+            document.getElementById('aviso-necessidades').innerHTML = aprovada
+                ? ''
+                : '<div class="alert alert-warning small">Você poderá publicar necessidades depois que a instituição for aprovada.</div>';
+
+            const corpo = document.getElementById('corpo-necessidades');
+
+            if (necessidades.length === 0) {
+                corpo.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Nenhuma necessidade publicada ainda.</td></tr>';
+                return;
+            }
+
+            corpo.innerHTML = necessidades.map(n => {
+                let situacao;
+                if (n.status === 'ATENDIDA') {
+                    situacao = '<span class="badge text-bg-info">ATENDIDA</span>';
+                } else if (n.expirada) {
+                    situacao = '<span class="badge bg-secondary">EXPIRADA</span>';
+                } else {
+                    situacao = '<span class="badge bg-success">ABERTA</span>';
+                }
+
+                const prazo = esc(formatarDataCurta(n.dataLimite))
+                    + (n.status === 'ABERTA' ? `<div class="small text-muted">${esc(textoPrazo(n.dataLimite))}</div>` : '');
+
+                const botaoStatus = n.status === 'ATENDIDA'
+                    ? `<button class="btn btn-sm btn-outline-secondary me-1" onclick="mudarStatusNecessidade(${n.id}, 'ABERTA')">Reabrir</button>`
+                    : `<button class="btn btn-sm btn-success me-1" onclick="mudarStatusNecessidade(${n.id}, 'ATENDIDA')">Atendida</button>`;
+
+                return `
+                    <tr>
+                        <td>${esc(n.item)}${n.descricao ? `<div class="small text-muted">${esc(n.descricao)}</div>` : ''}</td>
+                        <td>${n.quantidade ?? '—'}</td>
+                        <td>${prazo}</td>
+                        <td>${situacao}</td>
+                        <td class="text-nowrap">
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="editarNecessidade(${n.id})">Editar</button>
+                            ${botaoStatus}
+                            <button class="btn btn-sm btn-outline-danger" onclick="removerNecessidade(${n.id})">Remover</button>
+                        </td>
+                    </tr>`;
+            }).join('');
+        }
+
+        function editarNecessidade(id) {
+            const n = necessidades.find(x => x.id === id);
+            editandoId = id;
+
+            document.getElementById('nec-item').value = n.item;
+            document.getElementById('nec-quantidade').value = n.quantidade ?? '';
+            document.getElementById('nec-descricao').value = n.descricao || '';
+            // Necessidade expirada: força escolher uma nova data (prorrogar)
+            document.getElementById('nec-data').value = n.expirada ? '' : n.dataLimite;
+
+            document.getElementById('btn-necessidade').textContent = 'Salvar alterações da necessidade';
+            document.getElementById('btn-cancelar-edicao').classList.remove('d-none');
+            document.getElementById('form-necessidade').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function cancelarEdicao() {
+            editandoId = null;
+            document.getElementById('form-necessidade').reset();
+            document.getElementById('btn-necessidade').textContent = 'Publicar necessidade';
+            document.getElementById('btn-cancelar-edicao').classList.add('d-none');
+        }
+
+        document.getElementById('btn-cancelar-edicao').addEventListener('click', cancelarEdicao);
+
+        document.getElementById('form-necessidade').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            mostrarAlerta('');
+
+            const quantidade = document.getElementById('nec-quantidade').value;
+            const corpo = {
+                item: document.getElementById('nec-item').value.trim(),
+                descricao: document.getElementById('nec-descricao').value.trim() || null,
+                quantidade: quantidade ? Number(quantidade) : null,
+                dataLimite: document.getElementById('nec-data').value
+            };
+
+            const edicao = editandoId !== null;
+            try {
+                if (edicao) {
+                    await api('/necessidades/' + editandoId, { method: 'PUT', body: JSON.stringify(corpo) });
+                } else {
+                    await api('/necessidades', { method: 'POST', body: JSON.stringify(corpo) });
+                }
+                cancelarEdicao();
+                await carregarNecessidades();
+                mostrarAlerta(edicao ? 'Necessidade atualizada!' : 'Necessidade publicada!', 'success');
+            } catch (erro) {
+                mostrarAlerta(erro.message);
+            }
+        });
+
+        async function mudarStatusNecessidade(id, status) {
+            mostrarAlerta('');
+            try {
+                await api('/necessidades/' + id + '/status?status=' + status, { method: 'PATCH' });
+                await carregarNecessidades();
+            } catch (erro) {
+                mostrarAlerta(erro.message);
+            }
+        }
+
+        async function removerNecessidade(id) {
+            if (!confirm('Remover esta necessidade?')) {
+                return;
+            }
+            mostrarAlerta('');
+            try {
+                await api('/necessidades/' + id, { method: 'DELETE' });
+                if (editandoId === id) {
+                    cancelarEdicao();
+                }
+                await carregarNecessidades();
+            } catch (erro) {
+                mostrarAlerta(erro.message);
+            }
+        }
+
+        // ---------- Doações recebidas ----------
+
+        function renderDoacoes(doacoes) {
+            const corpo = document.getElementById('corpo-doacoes');
+
+            if (doacoes.length === 0) {
+                corpo.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Nenhuma doação recebida ainda.</td></tr>';
+                return;
+            }
+
+            // Pendentes primeiro; dentro de cada grupo, as mais recentes no topo
+            doacoes.sort((a, b) => {
+                const pa = a.status === 'PENDENTE' ? 0 : 1;
+                const pb = b.status === 'PENDENTE' ? 0 : 1;
+                if (pa !== pb) return pa - pb;
+                return new Date(b.dataDoacao) - new Date(a.dataDoacao);
+            });
+
+            corpo.innerHTML = doacoes.map(d => {
+                const acoes = d.status === 'PENDENTE'
+                    ? `<button class="btn btn-sm btn-success me-1" onclick="mudarStatus(${d.id}, 'CONFIRMADA')">Confirmar</button>
+                       <button class="btn btn-sm btn-outline-danger" onclick="mudarStatus(${d.id}, 'CANCELADA')">Cancelar</button>`
+                    : '<span class="text-muted">—</span>';
+
+                return `
+                    <tr>
+                        <td>${formatarData(d.dataDoacao)}</td>
+                        <td>${esc(d.usuarioNome)}</td>
+                        <td>${detalhes(d)}</td>
+                        <td>${badgeStatus(d.status)}</td>
+                        <td class="text-nowrap">${acoes}</td>
+                    </tr>`;
+            }).join('');
+        }
+
+        async function mudarStatus(id, status) {
+            if (status === 'CANCELADA' && !confirm('Cancelar esta doação?')) {
+                return;
+            }
+            mostrarAlerta('');
+            try {
+                await api('/doacoes/' + id + '/status?status=' + status, { method: 'PATCH' });
+                await carregarTudo();
+            } catch (erro) {
+                mostrarAlerta(erro.message);
+            }
+        }
+    </script>
+</body>
+</html>

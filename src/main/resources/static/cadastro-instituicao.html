@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cadastrar instituição - Marketplace de Doações</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div id="navbar"></div>
+
+    <main class="container py-4" style="max-width: 720px;">
+        <h1 class="h3 mb-1">Cadastre sua instituição</h1>
+        <p class="text-muted">Depois do envio, a administração confere os dados e aprova. Só então a instituição aparece no site e pode receber doações.</p>
+
+        <div id="alerta"></div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form id="form-cadastro">
+                    <h2 class="h5 mb-3">Dados da instituição</h2>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-7">
+                            <label class="form-label" for="nome">Nome</label>
+                            <input type="text" class="form-control" id="nome" required>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label" for="cnpj">CNPJ</label>
+                            <input type="text" class="form-control" id="cnpj" placeholder="00.000.000/0000-00" required>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label" for="endereco">Endereço</label>
+                            <input type="text" class="form-control" id="endereco">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="cidade">Cidade</label>
+                            <input type="text" class="form-control" id="cidade" value="Porto Alegre" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="descricao">Descrição</label>
+                            <textarea class="form-control" id="descricao" rows="3" maxlength="1000"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="chavePix">Chave Pix</label>
+                            <input type="text" class="form-control" id="chavePix" maxlength="77" required>
+                            <div class="form-text">
+                                CPF/CNPJ, email, telefone com +55 (ex.: +5551999998888) ou chave aleatória.
+                                Confira com atenção: é pra essa chave que as doações vão.
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2 class="h5 mb-3">Como vocês atuam</h2>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Áreas de atuação</label>
+                        <div class="form-text mb-2">Marque todas que se aplicam. Os doadores usam isso para encontrar a instituição.</div>
+                        <div class="row g-1" id="areas"></div>
+                        <input type="text" class="form-control mt-2" id="outra-area" maxlength="100"
+                               placeholder="Outra área (opcional se você marcou alguma acima)">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Itens que costumam receber (opcional)</label>
+                        <div class="form-text mb-2">
+                            Serve de orientação para os doadores e não bloqueia nenhuma doação: vocês decidem se aceitam o que for oferecido.
+                            Doações em dinheiro (Pix) estão sempre disponíveis.
+                        </div>
+                        <div class="row g-1" id="tipos"></div>
+                        <input type="text" class="form-control mt-2" id="outro-tipo" maxlength="100"
+                               placeholder="Outros itens (opcional)">
+                    </div>
+
+                    <h2 class="h5 mb-3">Acesso da instituição</h2>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label" for="email">Email</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="senha">Senha (mínimo 6 caracteres)</label>
+                            <input type="password" class="form-control" id="senha" minlength="6" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100" id="btn-enviar">Enviar cadastro</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        // Chegar aqui começa uma sessão nova
+        limparSessao();
+        renderNavbar();
+
+        montarCheckboxes(document.getElementById('areas'), AREAS_ATUACAO, 'area', []);
+        montarCheckboxes(document.getElementById('tipos'), TIPOS_ITEM, 'tipo', []);
+
+        document.getElementById('form-cadastro').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            mostrarAlerta('');
+
+            const areas = lerCheckboxes(document.getElementById('areas'));
+            const outraArea = document.getElementById('outra-area').value.trim();
+            if (areas.length === 0 && !outraArea) {
+                mostrarAlerta('Escolha pelo menos uma área de atuação (ou preencha "Outra área").');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            const email = document.getElementById('email').value.trim();
+            const senha = document.getElementById('senha').value;
+            const corpo = {
+                nome: document.getElementById('nome').value.trim(),
+                cnpj: document.getElementById('cnpj').value.trim(),
+                endereco: document.getElementById('endereco').value.trim(),
+                cidade: document.getElementById('cidade').value.trim(),
+                descricao: document.getElementById('descricao').value.trim(),
+                chavePix: document.getElementById('chavePix').value.trim(),
+                areasAtuacao: areas,
+                outraArea: outraArea || null,
+                tiposAceitos: lerCheckboxes(document.getElementById('tipos')),
+                outroTipoAceito: document.getElementById('outro-tipo').value.trim() || null,
+                email,
+                senha
+            };
+
+            const botao = document.getElementById('btn-enviar');
+            botao.disabled = true;
+            try {
+                await api('/instituicoes/cadastro', { method: 'POST', body: JSON.stringify(corpo) });
+
+                // Já entra na conta pra acompanhar a análise no painel
+                const sessao = await api('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, senha })
+                });
+                salvarSessao(sessao);
+                window.location.href = 'painel-instituicao.html';
+            } catch (erro) {
+                mostrarAlerta(erro.message);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                botao.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
