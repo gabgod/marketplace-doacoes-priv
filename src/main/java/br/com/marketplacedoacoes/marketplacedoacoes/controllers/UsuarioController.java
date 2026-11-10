@@ -20,7 +20,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioController {
-
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -28,8 +27,6 @@ public class UsuarioController {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
     }
-
-    // ---------- Perfil do usuário logado ----------
 
     @GetMapping("/me")
     public UsuarioDTO meuPerfil(Authentication authentication) {
@@ -58,8 +55,6 @@ public class UsuarioController {
         usuarioRepository.save(usuario);
     }
 
-    // ---------- Cadastro (público) ----------
-
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UsuarioDTO criar(@RequestBody @Valid UsuarioCadastroDTO dto) {
@@ -74,8 +69,6 @@ public class UsuarioController {
 
         return toDTO(usuarioRepository.save(usuario));
     }
-
-    // ---------- Administração (somente ADMIN) ----------
 
     @GetMapping
     public List<UsuarioDTO> listarTodos() {
@@ -116,8 +109,6 @@ public class UsuarioController {
         }
         usuarioRepository.deleteById(id);
     }
-
-    // ---------- Auxiliares ----------
 
     private Usuario usuarioLogado(Authentication authentication) {
         return usuarioRepository.findByEmail(authentication.getName())

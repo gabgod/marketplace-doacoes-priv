@@ -21,7 +21,6 @@ import java.util.Map;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
     @ExceptionHandler(RecursoNaoEncontradoException.class)
     public ResponseEntity<ErroResposta> tratarNaoEncontrado(RecursoNaoEncontradoException ex) {
         return montar(HttpStatus.NOT_FOUND, ex.getMessage(), null);
@@ -37,7 +36,6 @@ public class GlobalExceptionHandler {
         return montar(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
     }
 
-    // Falha nas anotações @Valid (@NotBlank, @Email, @Size...)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErroResposta> tratarValidacao(MethodArgumentNotValidException ex) {
         Map<String, String> campos = new LinkedHashMap<>();
@@ -46,34 +44,28 @@ public class GlobalExceptionHandler {
         return montar(HttpStatus.BAD_REQUEST, "Dados inválidos", campos);
     }
 
-    // JSON mal formatado ou valor de enum inexistente no corpo (ex: "tipo": "ROUPA")
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErroResposta> tratarCorpoInvalido(HttpMessageNotReadableException ex) {
         return montar(HttpStatus.BAD_REQUEST, "Corpo da requisição inválido ou mal formatado", null);
     }
 
-    // Parâmetro de URL com tipo errado (ex: ?status=INVALIDO ou /api/doacoes/abc)
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErroResposta> tratarTipoInvalido(MethodArgumentTypeMismatchException ex) {
         String mensagem = "Valor inválido para o parâmetro '" + ex.getName() + "': " + ex.getValue();
         return montar(HttpStatus.BAD_REQUEST, mensagem, null);
     }
 
-    // Rede de segurança para violações de constraint do banco (ex: CNPJ duplicado em requisições simultâneas)
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErroResposta> tratarIntegridade(DataIntegrityViolationException ex) {
         log.warn("Violação de integridade de dados", ex);
         return montar(HttpStatus.CONFLICT, "A operação viola uma restrição de integridade dos dados", null);
     }
 
-    // Lançada dentro dos controllers (ex: doação de outro usuário). Sem este handler viraria 500.
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErroResposta> tratarAcessoNegado(AccessDeniedException ex) {
         return montar(HttpStatus.FORBIDDEN, "Você não tem permissão para acessar este recurso", null);
     }
 
-    // Login com email ou senha errados. A mesma mensagem vale para os dois casos,
-    // assim ninguém descobre quais emails estão cadastrados.
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErroResposta> tratarAutenticacao(AuthenticationException ex) {
         return montar(HttpStatus.UNAUTHORIZED, "Email ou senha inválidos", null);
@@ -81,8 +73,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErroResposta> tratarGenerico(Exception ex) {
-        // Erros padrão do Spring MVC (rota inexistente, método HTTP errado, parâmetro ausente...)
-        // já carregam o status correto; sem esse desvio eles virariam 500.
         if (ex instanceof ErrorResponse erroSpring) {
             HttpStatus status = HttpStatus.valueOf(erroSpring.getStatusCode().value());
             return montar(status, erroSpring.getBody().getDetail(), null);

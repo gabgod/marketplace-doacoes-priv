@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/instituicoes")
 public class InstituicaoController {
-
     private final InstituicaoRepository instituicaoRepository;
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
@@ -42,8 +41,6 @@ public class InstituicaoController {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
     }
-
-    // ---------- Público: só instituições aprovadas ----------
 
     @GetMapping
     public List<InstituicaoDTO> listarAprovadas() {
@@ -60,8 +57,6 @@ public class InstituicaoController {
                 .map(this::toDTO)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Instituição não encontrada com id " + id));
     }
-
-    // ---------- Cadastro da instituição (público) ----------
 
     @PostMapping("/cadastro")
     @ResponseStatus(HttpStatus.CREATED)
@@ -104,12 +99,9 @@ public class InstituicaoController {
         instituicao.setChavePix(chavePix);
         instituicao.setResponsavel(responsavel);
         aplicarCategorias(instituicao, areas, outraArea, tipos, outroTipo);
-        // status PENDENTE: valor padrão da entidade, aguardando aprovação do admin
 
         return toPainelDTO(instituicaoRepository.save(instituicao));
     }
-
-    // ---------- A própria instituição (perfil INSTITUICAO) ----------
 
     @GetMapping("/minha")
     public InstituicaoPainelDTO minhaInstituicao(Authentication authentication) {
@@ -141,9 +133,6 @@ public class InstituicaoController {
         instituicao.setChavePix(chavePix);
         aplicarCategorias(instituicao, areas, outraArea, tipos, outroTipo);
 
-        // Aprovada que troca nome ou chave Pix volta para análise (evita troca de chave por golpistas).
-        // Rejeitada que corrige e salva também volta para análise.
-        // Mudar áreas e itens aceitos NÃO exige nova análise.
         boolean voltaParaAnalise =
                 instituicao.getStatus() == Instituicao.StatusInstituicao.REJEITADA
                 || (instituicao.getStatus() == Instituicao.StatusInstituicao.APROVADA && mudouDadoSensivel);
@@ -153,8 +142,6 @@ public class InstituicaoController {
 
         return toPainelDTO(instituicaoRepository.save(instituicao));
     }
-
-    // ---------- Administração (somente ADMIN) ----------
 
     @GetMapping("/admin")
     public List<InstituicaoPainelDTO> listarTodas() {
@@ -173,15 +160,11 @@ public class InstituicaoController {
         return toPainelDTO(instituicaoRepository.save(instituicao));
     }
 
-    // ---------- Auxiliares ----------
-
     private Instituicao instituicaoDoResponsavel(Authentication authentication) {
         return instituicaoRepository.findByResponsavelEmail(authentication.getName())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Nenhuma instituição vinculada a esta conta"));
     }
 
-    // Normaliza a chave como o Pix espera:
-    //  - telefone: +55 e só dígitos; CPF/CNPJ: só dígitos; email e chave aleatória: como digitados
     private String limparChave(String chave) {
         String limpa = chave.trim().replaceAll("\\s", "");
         if (limpa.startsWith("+")) {
@@ -206,9 +189,6 @@ public class InstituicaoController {
         }
     }
 
-    // ---------- Áreas de atuação e itens aceitos ----------
-
-    // Lista vinda do JSON -> conjunto (sem repetidos e sem nulos)
     private <E> Set<E> comoConjunto(List<E> lista) {
         if (lista == null) {
             return new HashSet<>();
@@ -218,19 +198,16 @@ public class InstituicaoController {
                 .collect(Collectors.toCollection(HashSet::new));
     }
 
-    // Texto livre: vazio vira null
     private String limparTexto(String texto) {
         return (texto == null || texto.isBlank()) ? null : texto.trim();
     }
 
-    // A área é obrigatória para o filtro do doador funcionar; os itens aceitos são opcionais
     private void validarAreas(Set<AreaAtuacao> areas, String outraArea) {
         if (areas.isEmpty() && outraArea == null) {
             throw new RegraDeNegocioException("Escolha pelo menos uma área de atuação (ou preencha 'Outra área')");
         }
     }
 
-    // Altera os conjuntos no lugar (em vez de trocar a referência), que é o jeito seguro com o Hibernate
     private void aplicarCategorias(Instituicao instituicao,
                                    Set<AreaAtuacao> areas, String outraArea,
                                    Set<TipoItem> tipos, String outroTipo) {
@@ -243,7 +220,6 @@ public class InstituicaoController {
         instituicao.setOutroTipoAceito(outroTipo);
     }
 
-    // Na ordem em que o enum foi declarado, para a resposta ser sempre a mesma
     private <E extends Enum<E>> List<E> ordenar(Set<E> conjunto) {
         return conjunto.stream().sorted().toList();
     }

@@ -45,10 +45,11 @@ public class SecurityConfig {
                                                    ObjectMapper objectMapper,
                                                    JwtService jwtService,
                                                    UserDetailsService userDetailsService,
+                                                   RegistroAtividade registroAtividade,
                                                    @Value("${spring.h2.console.enabled:false}") boolean h2Console) throws Exception {
 
         JwtAuthFilter jwtAuthFilter = new JwtAuthFilter(jwtService, userDetailsService);
-        ActivityLogFilter activityLogFilter = new ActivityLogFilter();
+        ActivityLogFilter activityLogFilter = new ActivityLogFilter(registroAtividade);
 
         http
                 .csrf(csrf -> csrf.disable())

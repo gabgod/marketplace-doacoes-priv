@@ -56,7 +56,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="js/api.js"></script>
     <script>
-        // Conta de instituição só recebe doações, então não mostra os botões de doar
         const podeDoar = getRole() !== 'INSTITUICAO';
 
         let instituicoes = [];
@@ -80,7 +79,6 @@
                 `<option value="${c.codigo}">${esc(c.rotulo)}</option>`));
         }
 
-        // Tudo o que a busca por texto enxerga em uma instituição, sem acento e em minúsculas
         function montarTextoBusca(i) {
             const necessidades = (necessidadesPorInstituicao[i.id] || [])
                 .map(n => n.item + ' ' + (n.descricao || ''));

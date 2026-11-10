@@ -3,7 +3,6 @@
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
 
-    <!-- Pasta dos logs de atividade. Mude com a variável LOG_DIR -->
     <property name="LOG_DIR" value="${LOG_DIR:-logs}"/>
 
     <appender name="ATIVIDADE_ARQUIVO" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -20,7 +19,6 @@
         </encoder>
     </appender>
 
-    <!-- Tudo que for logado em "ATIVIDADE" vai pro arquivo E pro console -->
     <logger name="ATIVIDADE" level="INFO" additivity="true">
         <appender-ref ref="ATIVIDADE_ARQUIVO"/>
     </logger>

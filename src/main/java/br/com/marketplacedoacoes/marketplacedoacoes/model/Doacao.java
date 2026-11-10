@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Doacao {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -36,23 +35,19 @@ public class Doacao {
     @Column(length = 500)
     private String descricao;
 
-    private Double valor; // usado quando tipo = DINHEIRO
+    private Double valor;
 
-    private Integer quantidade; // usado quando tipo = ITEM (número de unidades)
+    private Integer quantidade;
 
     @Enumerated(EnumType.STRING)
     private StatusDoacao status = StatusDoacao.PENDENTE;
 
     private LocalDateTime dataDoacao = LocalDateTime.now();
 
-    // ---------- Dados da entrega (somente doação de item) ----------
-
-    // Necessidade da instituição que esta doação atende (opcional)
     @ManyToOne
     @JoinColumn(name = "necessidade_id")
     private Necessidade necessidade;
 
-    // Só dígitos, com DDD
     @Column(length = 11)
     private String telefoneDoador;
 

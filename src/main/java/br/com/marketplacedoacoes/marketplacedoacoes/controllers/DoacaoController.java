@@ -26,7 +26,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/doacoes")
 public class DoacaoController {
-
     private static final ZoneId FUSO = ZoneId.of("America/Sao_Paulo");
     private static final int PRAZO_PADRAO_DIAS = 90;
     private static final DateTimeFormatter FORMATO_DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -60,12 +59,10 @@ public class DoacaoController {
                 doacoes = doacaoRepository.findAll();
             }
         } else if (isInstituicao(authentication)) {
-            // instituição enxerga as doações destinadas a ela
             Instituicao instituicao = instituicaoRepository.findByResponsavelEmail(authentication.getName())
                     .orElseThrow(() -> new RecursoNaoEncontradoException("Nenhuma instituição vinculada a esta conta"));
             doacoes = doacaoRepository.findByInstituicaoId(instituicao.getId());
         } else {
-            // usuário comum só enxerga as próprias doações, ignorando os filtros
             doacoes = doacaoRepository.findByUsuarioId(usuarioLogado(authentication).getId());
         }
         return doacoes.stream().map(this::toDTO).toList();
@@ -99,7 +96,6 @@ public class DoacaoController {
         doacao.setInstituicao(instituicao);
         doacao.setTipo(dto.tipo());
         doacao.setDescricao(dto.descricao() == null || dto.descricao().isBlank() ? null : dto.descricao().trim());
-        // status (PENDENTE) e dataDoacao (agora) usam os valores padrão da entidade
 
         if (dto.tipo() == Doacao.TipoDoacao.DINHEIRO) {
             if (dto.valor() == null || dto.valor() <= 0) {
@@ -113,7 +109,6 @@ public class DoacaoController {
         return toDTO(doacaoRepository.save(doacao));
     }
 
-    // Quem confirma o recebimento é a instituição dona da doação (ou o ADMIN)
     @PatchMapping("/{id}/status")
     public DoacaoDTO atualizarStatus(@PathVariable Long id,
                                      @RequestParam Doacao.StatusDoacao status,
@@ -137,8 +132,6 @@ public class DoacaoController {
         }
         doacaoRepository.deleteById(id);
     }
-
-    // ---------- Doação de item: quantidade, telefone, forma de entrega, endereço, data e necessidade ----------
 
     private void preencherDadosDoItem(Doacao doacao, DoacaoDTO dto, Instituicao instituicao) {
         if (doacao.getDescricao() == null) {
@@ -207,8 +200,6 @@ public class DoacaoController {
         return necessidade;
     }
 
-    // ---------- Auxiliares ----------
-
     private Usuario usuarioLogado(Authentication authentication) {
         return usuarioRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário autenticado não encontrado"));
@@ -227,7 +218,6 @@ public class DoacaoController {
                 .anyMatch(a -> a.getAuthority().equals(perfil));
     }
 
-    // A conta logada é a responsável pela instituição que recebe esta doação?
     private boolean ehResponsavel(Doacao doacao, Authentication authentication) {
         Usuario responsavel = doacao.getInstituicao().getResponsavel();
         return responsavel != null && responsavel.getEmail().equals(authentication.getName());

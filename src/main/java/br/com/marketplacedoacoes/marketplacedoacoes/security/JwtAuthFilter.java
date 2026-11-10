@@ -16,10 +16,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-// Sem @Component de propósito: o filtro é criado na SecurityConfig.
-// Com @Component o Spring Boot também o registraria como filtro do servlet, fora da cadeia de segurança.
 public class JwtAuthFilter extends OncePerRequestFilter {
-
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
 
@@ -32,7 +29,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-
         String cabecalho = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         if (cabecalho != null && cabecalho.startsWith("Bearer ")) {
@@ -46,8 +42,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 autenticacao.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(autenticacao);
             } catch (JwtException | IllegalArgumentException | UsernameNotFoundException e) {
-                // Token inválido, expirado ou de usuário removido: segue sem autenticar.
-                // Se a rota exigir login, o entry point da SecurityConfig devolve o 401.
             }
         }
 

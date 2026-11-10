@@ -10,10 +10,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface NecessidadeRepository extends JpaRepository<Necessidade, Long> {
-
     List<Necessidade> findByInstituicaoIdOrderByDataLimiteAsc(Long instituicaoId);
 
-    // Necessidades visíveis ao público: abertas, dentro do prazo e de instituições aprovadas
     @Query("select n from Necessidade n "
             + "where n.status = :status and n.dataLimite >= :hoje "
             + "and n.instituicao.status = :statusInstituicao "

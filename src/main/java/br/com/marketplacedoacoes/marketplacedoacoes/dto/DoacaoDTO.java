@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 public record DoacaoDTO(
         Long id,
 
-        // Ignorados na criação: o doador é sempre o usuário logado
         Long usuarioId,
         String usuarioNome,
 
@@ -27,16 +26,13 @@ public record DoacaoDTO(
 
         Double valor,
 
-        // Somente doação de item: quantas unidades serão doadas
         @Min(value = 1, message = "A quantidade deve ser de, no mínimo, 1 unidade")
         @Max(value = 10000, message = "A quantidade deve ser de, no máximo, 10000 unidades")
         Integer quantidade,
 
-        // Ignorados na criação: status e data são definidos pelo servidor
         Doacao.StatusDoacao status,
         LocalDateTime dataDoacao,
 
-        // Somente doação de item
         String telefoneDoador,
         Doacao.FormaEntrega formaEntrega,
 
@@ -46,6 +42,5 @@ public record DoacaoDTO(
         LocalDate dataPrevista,
         Long necessidadeId,
 
-        // Somente na resposta
         String necessidadeItem
 ) {}

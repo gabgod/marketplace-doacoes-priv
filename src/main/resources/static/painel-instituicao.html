@@ -210,7 +210,6 @@
             return html;
         }
 
-        // Só entra quem tem conta de instituição (a API também confere)
         if (exigirLogin()) {
             if (getRole() !== 'INSTITUICAO') {
                 window.location.href = 'index.html';
@@ -247,8 +246,6 @@
                 mostrarAlerta(erro.message);
             }
         }
-
-        // ---------- Dados da instituição ----------
 
         function renderInstituicao(i) {
             const [tipo, html] = AVISOS[i.status];
@@ -313,8 +310,6 @@
             }
         });
 
-        // ---------- Necessidades ----------
-
         function prepararFormularioNecessidade() {
             const campoData = document.getElementById('nec-data');
             campoData.min = hojeISO();
@@ -374,7 +369,6 @@
             document.getElementById('nec-item').value = n.item;
             document.getElementById('nec-quantidade').value = n.quantidade ?? '';
             document.getElementById('nec-descricao').value = n.descricao || '';
-            // Necessidade expirada: força escolher uma nova data (prorrogar)
             document.getElementById('nec-data').value = n.expirada ? '' : n.dataLimite;
 
             document.getElementById('btn-necessidade').textContent = 'Salvar alterações da necessidade';
@@ -444,8 +438,6 @@
             }
         }
 
-        // ---------- Doações recebidas ----------
-
         function renderDoacoes(doacoes) {
             const corpo = document.getElementById('corpo-doacoes');
 
@@ -454,7 +446,6 @@
                 return;
             }
 
-            // Pendentes primeiro; dentro de cada grupo, as mais recentes no topo
             doacoes.sort((a, b) => {
                 const pa = a.status === 'PENDENTE' ? 0 : 1;
                 const pb = b.status === 'PENDENTE' ? 0 : 1;

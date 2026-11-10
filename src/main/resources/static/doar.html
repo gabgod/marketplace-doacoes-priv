@@ -186,7 +186,6 @@
                 return;
             }
 
-            // Links da página inicial: ?instituicaoId=1 ou ?instituicaoId=1&necessidadeId=3
             const params = new URLSearchParams(window.location.search);
             const necessidadeDaUrl = necessidades.find(n => String(n.id) === params.get('necessidadeId'));
             const instituicaoDaUrl = necessidadeDaUrl
@@ -205,7 +204,6 @@
             atualizarCampos();
         }
 
-        // Lista as necessidades abertas da instituição escolhida
         function atualizarNecessidades(preSelecionadaId) {
             const id = Number(selectInstituicao.value);
             const daInstituicao = necessidades.filter(n => n.instituicaoId === id);
@@ -219,7 +217,6 @@
             aplicarNecessidade();
         }
 
-        // Ao escolher uma necessidade, sugere o item como descrição e limita a data ao prazo dela
         function aplicarNecessidade() {
             const n = necessidadeSelecionada();
             infoNecessidade.textContent = n && n.descricao ? n.descricao : '';
@@ -238,7 +235,6 @@
             atualizarData();
         }
 
-        // Mostra quantas unidades a instituição pediu (só informativo: o doador pode dar mais ou menos)
         function atualizarQuantidade() {
             const n = necessidadeSelecionada();
             infoQuantidade.textContent = n && n.quantidade
@@ -247,7 +243,6 @@
                 : 'Pode ser mais de uma, como 3 cobertores ou 10 pacotes.';
         }
 
-        // Item sem necessidade escolhida: mostra o que a instituição costuma receber (só informativo, nunca bloqueia)
         function atualizarAceitos() {
             const instituicao = instituicaoSelecionada();
             const mostrar = selectTipo.value === 'ITEM' && !selectNecessidade.value && instituicao;
@@ -297,7 +292,6 @@
                 : '';
         }
 
-        // Dinheiro pede valor; item pede quantidade, descrição, telefone, forma de entrega e data
         function atualizarCampos() {
             const dinheiro = selectTipo.value === 'DINHEIRO';
 

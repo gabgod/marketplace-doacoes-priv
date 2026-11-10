@@ -23,7 +23,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/necessidades")
 public class NecessidadeController {
-
     private static final ZoneId FUSO = ZoneId.of("America/Sao_Paulo");
     private static final int PRAZO_MAXIMO_DIAS = 365;
 
@@ -39,8 +38,6 @@ public class NecessidadeController {
         this.doacaoRepository = doacaoRepository;
     }
 
-    // ---------- Público: só necessidades abertas, no prazo e de instituições aprovadas ----------
-
     @GetMapping
     public List<NecessidadeDTO> listarAbertas(@RequestParam(required = false) Long instituicaoId) {
         LocalDate hoje = LocalDate.now(FUSO);
@@ -51,8 +48,6 @@ public class NecessidadeController {
                 .map(n -> toDTO(n, hoje))
                 .toList();
     }
-
-    // ---------- A própria instituição (perfil INSTITUICAO) ----------
 
     @GetMapping("/minhas")
     public List<NecessidadeDTO> listarMinhas(Authentication authentication) {
@@ -113,14 +108,11 @@ public class NecessidadeController {
         necessidadeRepository.delete(necessidade);
     }
 
-    // ---------- Auxiliares ----------
-
     private Instituicao instituicaoDoResponsavel(Authentication authentication) {
         return instituicaoRepository.findByResponsavelEmail(authentication.getName())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Nenhuma instituição vinculada a esta conta"));
     }
 
-    // Busca a necessidade e confere se ela pertence à instituição logada
     private Necessidade necessidadeDaInstituicao(Long id, Authentication authentication) {
         Instituicao instituicao = instituicaoDoResponsavel(authentication);
         Necessidade necessidade = necessidadeRepository.findById(id)

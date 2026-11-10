@@ -89,7 +89,6 @@
             return tipo + (texto ? ' <span class="text-muted">— ' + texto + '</span>' : '');
         }
 
-        // Só entra quem está logado como ADMIN (a API também confere, isto é só conforto)
         if (exigirLogin()) {
             if (getRole() !== 'ADMIN') {
                 window.location.href = 'index.html';
@@ -122,7 +121,6 @@
                 return;
             }
 
-            // Pendentes primeiro, depois por nome
             instituicoes.sort((a, b) => {
                 const pa = a.status === 'PENDENTE' ? 0 : 1;
                 const pb = b.status === 'PENDENTE' ? 0 : 1;
@@ -171,7 +169,6 @@
                 return;
             }
 
-            // Pendentes primeiro; dentro de cada grupo, as mais recentes no topo
             doacoes.sort((a, b) => {
                 const pa = a.status === 'PENDENTE' ? 0 : 1;
                 const pb = b.status === 'PENDENTE' ? 0 : 1;

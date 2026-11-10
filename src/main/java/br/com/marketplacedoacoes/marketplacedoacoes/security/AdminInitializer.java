@@ -16,7 +16,6 @@ import java.util.UUID;
 
 @Component
 public class AdminInitializer implements CommandLineRunner {
-
     private static final Logger log = LoggerFactory.getLogger(AdminInitializer.class);
     private static final String ADMIN_ANTIGO = "admin@marketplace.com";
 
@@ -42,7 +41,6 @@ public class AdminInitializer implements CommandLineRunner {
     public void run(String... args) {
         boolean producao = environment.acceptsProfiles(Profiles.of("prod"));
 
-        // Em produção, recusa credenciais fracas ou as antigas de teste
         if (producao) {
             if (adminSenha.length() < 12 || adminSenha.equals("admin123")) {
                 throw new IllegalStateException(
@@ -59,7 +57,6 @@ public class AdminInitializer implements CommandLineRunner {
         if (admin == null) {
             Usuario antigo = usuarioRepository.findByEmail(ADMIN_ANTIGO).orElse(null);
             if (antigo != null) {
-                // Já existia o admin de teste no banco: reaproveita a conta (mantém o histórico)
                 antigo.setEmail(adminEmail);
                 antigo.setSenha(passwordEncoder.encode(adminSenha));
                 antigo.setRole(Role.ADMIN);
@@ -75,7 +72,6 @@ public class AdminInitializer implements CommandLineRunner {
             usuarioRepository.save(admin);
             log.info("Admin criado: {}", adminEmail);
         } else {
-            // ADMIN_SENHA é a fonte da verdade: se você trocar a variável, a senha troca no próximo start
             boolean mudou = false;
             if (!passwordEncoder.matches(adminSenha, admin.getSenha())) {
                 admin.setSenha(passwordEncoder.encode(adminSenha));
@@ -91,7 +87,6 @@ public class AdminInitializer implements CommandLineRunner {
             }
         }
 
-        // Se o admin de teste ainda existe ao lado do novo, ele perde o poder e a senha vira aleatória
         if (!adminEmail.equalsIgnoreCase(ADMIN_ANTIGO)) {
             usuarioRepository.findByEmail(ADMIN_ANTIGO).ifPresent(antigo -> {
                 antigo.setRole(Role.USER);

@@ -80,7 +80,6 @@
                 const [eu, instituicoes] = await Promise.all([api('/usuarios/me'), api('/instituicoes')]);
                 instituicoesPorId = Object.fromEntries(instituicoes.map(i => [i.id, i]));
 
-                // O filtro por usuário faz o ADMIN também ver só as próprias doações aqui
                 const doacoes = await api('/doacoes?usuarioId=' + eu.id);
                 doacoesPorId = Object.fromEntries(doacoes.map(d => [d.id, d]));
 

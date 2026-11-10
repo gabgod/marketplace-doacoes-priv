@@ -39,7 +39,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class DoacaoControllerTest {
-
     private static final ZoneId FUSO = ZoneId.of("America/Sao_Paulo");
 
     @Mock
@@ -84,8 +83,6 @@ class DoacaoControllerTest {
         when(instituicaoRepository.findByResponsavelEmail("ong@teste.com")).thenReturn(Optional.of(instituicao));
         when(doacaoRepository.save(any(Doacao.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
     }
-
-    // ---------- Doação em dinheiro ----------
 
     @Test
     void registraDoacaoEmDinheiroComoPendente() {
@@ -132,8 +129,6 @@ class DoacaoControllerTest {
                 .isInstanceOf(RegraDeNegocioException.class)
                 .hasMessageContaining("Instituição não encontrada");
     }
-
-    // ---------- Doação de item ----------
 
     @Test
     void registraDoacaoDeItemComDadosDeEntrega() {
@@ -256,8 +251,6 @@ class DoacaoControllerTest {
                 .hasMessageContaining("90 dias");
     }
 
-    // ---------- Doação de item ligada a uma necessidade ----------
-
     @Test
     void ligaADoacaoAUmaNecessidadeAberta() {
         necessidade(7L, instituicao, hoje.plusDays(10), Necessidade.StatusNecessidade.ABERTA);
@@ -330,8 +323,6 @@ class DoacaoControllerTest {
                 .hasMessageContaining("Necessidade não encontrada");
     }
 
-    // ---------- Quem enxerga o quê ----------
-
     @Test
     void doadorComumEnxergaSoAsPropriasDoacoesEIgnoraOsFiltros() {
         when(doacaoRepository.findByUsuarioId(1L)).thenReturn(List.of(doacao(5L, doador)));
@@ -392,8 +383,6 @@ class DoacaoControllerTest {
                 .isInstanceOf(RecursoNaoEncontradoException.class);
     }
 
-    // ---------- Confirmação do recebimento ----------
-
     @Test
     void instituicaoDestinatariaConfirmaADoacao() {
         when(doacaoRepository.findById(5L)).thenReturn(Optional.of(doacao(5L, doador)));
@@ -436,8 +425,6 @@ class DoacaoControllerTest {
         assertThatThrownBy(() -> controller.atualizarStatus(5L, Doacao.StatusDoacao.CONFIRMADA, comoAdmin))
                 .isInstanceOf(RecursoNaoEncontradoException.class);
     }
-
-    // ---------- Montagem dos dados de teste ----------
 
     private Usuario usuario(Long id, String nome, String email) {
         Usuario u = new Usuario();

@@ -1,7 +1,5 @@
 const API = '/api';
 
-// ---------- Sessão (token guardado no navegador) ----------
-
 function getToken() {
     return localStorage.getItem('token');
 }
@@ -29,7 +27,6 @@ function sair() {
     window.location.href = 'index.html';
 }
 
-// Páginas que exigem login chamam isso no começo
 function exigirLogin() {
     if (!estaLogado()) {
         window.location.href = 'login.html';
@@ -37,8 +34,6 @@ function exigirLogin() {
     }
     return true;
 }
-
-// ---------- Chamadas à API ----------
 
 async function api(caminho, opcoes = {}) {
     const headers = { 'Content-Type': 'application/json', ...(opcoes.headers || {}) };
@@ -49,7 +44,6 @@ async function api(caminho, opcoes = {}) {
 
     const resposta = await fetch(API + caminho, { ...opcoes, headers });
 
-    // Token expirado ou inválido: volta pro login
     if (resposta.status === 401 && token) {
         limparSessao();
         window.location.href = 'login.html';
@@ -68,7 +62,6 @@ async function api(caminho, opcoes = {}) {
     return corpo;
 }
 
-// Usa o formato de erro do GlobalExceptionHandler (mensagem e campos)
 function montarMensagem(corpo, status) {
     if (corpo && corpo.campos) {
         return Object.values(corpo.campos).join(' | ');
@@ -79,9 +72,6 @@ function montarMensagem(corpo, status) {
     return 'Erro ' + status;
 }
 
-// ---------- Utilidades de tela ----------
-
-// Escapa texto vindo do usuário antes de colocar em innerHTML (evita XSS)
 function esc(texto) {
     const div = document.createElement('div');
     div.textContent = texto ?? '';
@@ -114,9 +104,6 @@ function formatarTelefone(telefone) {
     if (d.length === 10) return d.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3');
     return d;
 }
-
-// ---------- Datas (sem hora, no formato AAAA-MM-DD) ----------
-// Lê a data como data local, para o fuso horário não "andar um dia"
 
 function parseData(iso) {
     const [a, m, d] = iso.split('-').map(Number);
@@ -155,9 +142,6 @@ function textoPrazo(iso) {
     return 'faltam ' + n + ' dias';
 }
 
-// ---------- Categorias das instituições ----------
-// Os códigos precisam ser idênticos aos enums AreaAtuacao e TipoItem do back-end
-
 const AREAS_ATUACAO = [
     { codigo: 'CRIANCAS_E_ADOLESCENTES', rotulo: 'Crianças e adolescentes' },
     { codigo: 'IDOSOS', rotulo: 'Idosos' },
@@ -188,12 +172,10 @@ function rotulo(lista, codigo) {
     return categoria ? categoria.rotulo : codigo;
 }
 
-// Minúsculas e sem acento, para a busca achar "criancas" e "CRIANÇAS"
 function normalizarBusca(texto) {
     return String(texto ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 }
 
-// Desenha uma lista de checkboxes dentro de um elemento (que deve ter a classe "row")
 function montarCheckboxes(container, lista, prefixo, selecionados) {
     const marcados = selecionados || [];
     container.innerHTML = lista.map(c => `
@@ -210,8 +192,6 @@ function lerCheckboxes(container) {
     return Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map(i => i.value);
 }
 
-// Etiquetas (badges) das categorias; o texto livre ("Outros") entra no fim.
-// destacarOutro pinta o texto livre de amarelo (usado na tela do admin, que confere esse texto).
 function etiquetas(codigos, lista, outro, classe, destacarOutro = false) {
     const html = (codigos || []).map(c =>
         `<span class="badge ${classe} fw-normal">${esc(rotulo(lista, c))}</span>`);
@@ -222,11 +202,6 @@ function etiquetas(codigos, lista, outro, classe, destacarOutro = false) {
     return html.join(' ');
 }
 
-// ---------- Pix ----------
-// Gera o "Pix Copia e Cola" (padrão BR Code do Banco Central). O QR Code é esse mesmo texto desenhado.
-// Não há integração com banco: o dinheiro vai direto para a chave da instituição.
-
-// Nome e cidade do Pix: maiúsculas, sem acento e sem símbolos
 function semAcentos(texto) {
     return String(texto ?? '')
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -236,12 +211,10 @@ function semAcentos(texto) {
         .toUpperCase();
 }
 
-// Cada campo do Pix é: id (2 dígitos) + tamanho (2 dígitos) + valor
 function campoPix(id, valor) {
     return id + String(valor.length).padStart(2, '0') + valor;
 }
 
-// CRC16-CCITT (polinômio 0x1021, valor inicial 0xFFFF) exigido no final do código
 function crc16(texto) {
     let crc = 0xFFFF;
     for (let i = 0; i < texto.length; i++) {
@@ -274,7 +247,6 @@ async function copiarCodigo(textarea, rotulo) {
     try {
         await navigator.clipboard.writeText(textarea.value);
     } catch (e) {
-        // Contextos sem permissão de área de transferência: seleciona e copia
         textarea.select();
         document.execCommand('copy');
     }
@@ -282,8 +254,6 @@ async function copiarCodigo(textarea, rotulo) {
     setTimeout(() => { rotulo.textContent = ''; }, 2500);
 }
 
-// Preenche um elemento com o QR Code e o Copia e Cola
-// dados: { chave, nome, cidade, valor (opcional) }
 function montarPix(container, dados) {
     const codigo = gerarPixCopiaECola(dados);
 
@@ -317,7 +287,6 @@ function montarPix(container, dados) {
     container.querySelector('.pix-copiar').addEventListener('click', () => copiarCodigo(area, rotuloCopiado));
 }
 
-// Resumo (instituição, chave e valor) mostrado acima do QR Code
 function resumoPix(instituicao, valor) {
     return `
         <div class="fw-semibold">${esc(instituicao.nome)}</div>
@@ -325,7 +294,6 @@ function resumoPix(instituicao, valor) {
         ${valor ? `<div class="fs-4 mt-1">${formatarDinheiro(valor)}</div>` : ''}`;
 }
 
-// Abre uma janela (modal) com o QR Code. O modal é criado na primeira chamada.
 function abrirModalPix(titulo, resumoHtml, dados) {
     let modal = document.getElementById('modal-pix');
     if (!modal) {
@@ -353,7 +321,6 @@ function abrirModalPix(titulo, resumoHtml, dados) {
     bootstrap.Modal.getOrCreateInstance(modal).show();
 }
 
-// Pix sem cadastro: só mostra o QR Code (nada é gravado). O valor é opcional.
 function abrirPixRapido(instituicao) {
     const dados = { chave: instituicao.chavePix, nome: instituicao.nome, cidade: instituicao.cidade };
 
@@ -377,9 +344,6 @@ function abrirPixRapido(instituicao) {
     });
 }
 
-// ---------- Menu ----------
-
-// Monta o menu do topo conforme o perfil do usuário
 function renderNavbar() {
     const itens = ['<li class="nav-item"><a class="nav-link" href="index.html">Instituições</a></li>'];
 

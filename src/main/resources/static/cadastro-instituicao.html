@@ -91,7 +91,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/api.js"></script>
     <script>
-        // Chegar aqui começa uma sessão nova
         limparSessao();
         renderNavbar();
 
@@ -132,7 +131,6 @@
             try {
                 await api('/instituicoes/cadastro', { method: 'POST', body: JSON.stringify(corpo) });
 
-                // Já entra na conta pra acompanhar a análise no painel
                 const sessao = await api('/auth/login', {
                     method: 'POST',
                     body: JSON.stringify({ email, senha })

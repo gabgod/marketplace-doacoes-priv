@@ -15,7 +15,6 @@ import java.util.Date;
 @Slf4j
 @Service
 public class JwtService {
-
     private final SecretKey chave;
     private final long expiracaoMinutos;
 
@@ -27,7 +26,6 @@ public class JwtService {
             this.chave = Jwts.SIG.HS256.key().build();
             log.warn("app.jwt.secret não definido: usando chave aleatória (tokens deixam de valer ao reiniciar)");
         } else {
-            // HS256 exige chave com pelo menos 32 bytes; menos que isso lança WeakKeyException
             this.chave = Keys.hmacShaKeyFor(segredo.getBytes(StandardCharsets.UTF_8));
         }
     }
@@ -42,7 +40,6 @@ public class JwtService {
                 .compact();
     }
 
-    // Valida assinatura e expiração; lança JwtException se o token for inválido
     public String extrairEmail(String token) {
         return Jwts.parser()
                 .verifyWith(chave)

@@ -45,7 +45,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class InstituicaoControllerTest {
-
     private static final String CNPJ_FORMATADO = "11.222.333/0001-81";
     private static final String CNPJ_LIMPO = "11222333000181";
     private static final String CPF_COMO_PIX = "12345678909";
@@ -70,8 +69,6 @@ class InstituicaoControllerTest {
         when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
         when(instituicaoRepository.save(any(Instituicao.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
     }
-
-    // ---------- Cadastro ----------
 
     @Test
     void cadastraInstituicaoPendenteComContaDeAcesso() {
@@ -154,8 +151,6 @@ class InstituicaoControllerTest {
         verify(instituicaoRepository, never()).save(any());
     }
 
-    // ---------- Categorias ----------
-
     @Test
     void exigePeloMenosUmaAreaOuOutraArea() {
         InstituicaoCadastroDTO semNada = cadastro(CNPJ_FORMATADO, CPF_COMO_PIX, List.of(), null);
@@ -196,11 +191,8 @@ class InstituicaoControllerTest {
 
         InstituicaoPainelDTO resposta = controller.cadastrar(cadastro(CNPJ_FORMATADO, CPF_COMO_PIX, areas, null));
 
-        // sem repetidos, sem nulos e na ordem em que o enum foi declarado
         assertThat(resposta.areasAtuacao()).containsExactly(AreaAtuacao.IDOSOS, AreaAtuacao.SAUDE);
     }
-
-    // ---------- Edição pela própria instituição ----------
 
     @Test
     void alterarSoDescricaoECategoriasNaoTiraDoAr() {
@@ -213,7 +205,6 @@ class InstituicaoControllerTest {
 
         assertThat(resposta.status()).isEqualTo(Instituicao.StatusInstituicao.APROVADA);
         assertThat(resposta.descricao()).isEqualTo("Nova descrição");
-        // as categorias antigas (IDOSOS) são substituídas, não somadas; a ordem é a do enum (SAUDE vem antes de EDUCACAO)
         assertThat(resposta.areasAtuacao()).containsExactly(AreaAtuacao.SAUDE, AreaAtuacao.EDUCACAO);
         assertThat(resposta.tiposAceitos()).isEmpty();
     }
@@ -307,12 +298,9 @@ class InstituicaoControllerTest {
                 .isInstanceOf(RecursoNaoEncontradoException.class);
     }
 
-    // ---------- Consulta pública e administração ----------
-
     @Test
     void listaPublicaTrazSoAprovadasComCategoriasOrdenadas() {
         Instituicao instituicao = aprovada();
-        // a instituição de teste já vem com uma área e um item; limpa para controlar exatamente o que entra
         instituicao.getAreasAtuacao().clear();
         instituicao.getAreasAtuacao().add(AreaAtuacao.SAUDE);
         instituicao.getAreasAtuacao().add(AreaAtuacao.CRIANCAS_E_ADOLESCENTES);
@@ -366,9 +354,6 @@ class InstituicaoControllerTest {
                 .isInstanceOf(RecursoNaoEncontradoException.class);
     }
 
-    // ---------- Montagem dos dados de teste ----------
-
-    // Instituição aprovada que já vem com a área IDOSOS e o item ALIMENTOS
     private Instituicao aprovada() {
         Usuario responsavel = new Usuario();
         responsavel.setId(2L);

@@ -1,6 +1,3 @@
-// Testes do js/api.js (Pix, busca, categorias e datas).
-// Rodar na raiz do projeto, com Node 18 ou superior:  node --test src/test/js/api.test.js
-// Não precisa instalar nada: usa só o que já vem no Node.
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -12,7 +9,6 @@ const RAIZ = path.join(__dirname, '..', '..', 'main');
 const CODIGO = fs.readFileSync(path.join(RAIZ, 'resources', 'static', 'js', 'api.js'), 'utf8');
 const PASTA_MODEL = path.join(RAIZ, 'java', 'br', 'com', 'marketplacedoacoes', 'marketplacedoacoes', 'model');
 
-// Ambiente mínimo de navegador, só o que o api.js usa quando é carregado e nas funções testadas
 const contexto = vm.createContext({
     console,
     localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
@@ -30,17 +26,14 @@ const contexto = vm.createContext({
 });
 vm.runInContext(CODIGO, contexto);
 
-// Executa uma expressão dentro do ambiente onde o api.js foi carregado
 function js(expressao) {
     return vm.runInContext(expressao, contexto);
 }
 
-// Traz um valor de dentro do ambiente isolado para cá (arrays de outro "mundo" não são comparáveis direto)
 function jsLista(expressao) {
     return JSON.parse(js(`JSON.stringify(${expressao})`));
 }
 
-// Lê os campos do Pix (id de 2 dígitos + tamanho de 2 dígitos + valor) e devolve { id: valor }
 function lerCampos(texto) {
     const campos = {};
     let i = 0;
@@ -52,8 +45,6 @@ function lerCampos(texto) {
     }
     return campos;
 }
-
-// ---------- Pix ----------
 
 test('CRC16 bate com o valor de referência do padrão CCITT-FALSE', () => {
     assert.equal(js('crc16("123456789")'), '29B1');
@@ -100,8 +91,6 @@ test('semAcentos remove acentos e símbolos', () => {
     assert.equal(js('semAcentos("São Paulo - Zona/Sul!")'), 'SAO PAULO ZONA SUL');
 });
 
-// ---------- Busca e categorias ----------
-
 test('normalizarBusca ignora acento e maiúsculas', () => {
     assert.equal(js('normalizarBusca("CRIANÇAS Educação")'), 'criancas educacao');
     assert.equal(js('normalizarBusca(null)'), '');
@@ -143,8 +132,6 @@ test('etiquetas destaca o texto livre em amarelo só quando pedido (tela do admi
 test('etiquetas sem nada devolve texto vazio', () => {
     assert.equal(js('etiquetas([], AREAS_ATUACAO, null, "x")'), '');
 });
-
-// ---------- Datas e formatação ----------
 
 test('somarDias atravessa mês e ano', () => {
     assert.equal(js('somarDias("2026-10-31", 1)'), '2026-11-01');

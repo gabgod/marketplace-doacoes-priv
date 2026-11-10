@@ -38,7 +38,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class NecessidadeControllerTest {
-
     private static final ZoneId FUSO = ZoneId.of("America/Sao_Paulo");
 
     @Mock
@@ -70,8 +69,6 @@ class NecessidadeControllerTest {
         when(instituicaoRepository.findByResponsavelEmail("ong@teste.com")).thenReturn(Optional.of(instituicao));
         when(necessidadeRepository.save(any(Necessidade.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
     }
-
-    // ---------- Publicação ----------
 
     @Test
     void publicaNecessidadeAbertaLimpandoOsTextos() {
@@ -126,8 +123,6 @@ class NecessidadeControllerTest {
                 .isInstanceOf(RecursoNaoEncontradoException.class);
     }
 
-    // ---------- Edição, prorrogação e status ----------
-
     @Test
     void prorrogaUmaNecessidadeExpirada() {
         Necessidade vencida = necessidade(7L, instituicao, hoje.minusDays(3), Necessidade.StatusNecessidade.ABERTA);
@@ -170,8 +165,6 @@ class NecessidadeControllerTest {
                 .isEqualTo(Necessidade.StatusNecessidade.ABERTA);
     }
 
-    // ---------- Remoção ----------
-
     @Test
     void removeNecessidadeSemDoacoes() {
         Necessidade n = necessidade(7L, instituicao, hoje.plusDays(5), Necessidade.StatusNecessidade.ABERTA);
@@ -194,8 +187,6 @@ class NecessidadeControllerTest {
                 .hasMessageContaining("atendida");
         verify(necessidadeRepository, never()).delete(any(Necessidade.class));
     }
-
-    // ---------- Listagens ----------
 
     @Test
     void listaDaInstituicaoMarcaComoExpiradaSoAsAbertasVencidas() {
@@ -224,8 +215,6 @@ class NecessidadeControllerTest {
         assertThat(controller.listarAbertas(null)).hasSize(2);
         assertThat(controller.listarAbertas(99L)).extracting(NecessidadeDTO::id).containsExactly(2L);
     }
-
-    // ---------- Montagem dos dados de teste ----------
 
     private NecessidadeEntradaDTO entrada(LocalDate dataLimite) {
         return new NecessidadeEntradaDTO("Cobertores", "Em bom estado", 20, dataLimite);

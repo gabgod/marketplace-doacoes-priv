@@ -17,7 +17,6 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Necessidade {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

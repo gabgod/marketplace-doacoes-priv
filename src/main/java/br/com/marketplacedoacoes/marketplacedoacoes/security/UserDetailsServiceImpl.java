@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
-
     private final UsuarioRepository usuarioRepository;
 
     public UserDetailsServiceImpl(UsuarioRepository usuarioRepository) {
@@ -24,7 +23,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
         return User.withUsername(usuario.getEmail())
                 .password(usuario.getSenha())
-                .roles(usuario.getRole().name()) // vira a authority ROLE_USER / ROLE_ADMIN
+                .roles(usuario.getRole().name())
                 .build();
     }
 }
